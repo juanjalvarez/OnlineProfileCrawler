@@ -31,11 +31,11 @@ public class TwitterCrawler implements Runnable {
 			dataDir.mkdir();
 	}
 
-	private CrawlerData meta;
+	private CrawlerMetaData meta;
 	private Thread thread;
 
 	public static void main(String[] args) throws Exception {
-		PrintStream ps = new PrintStream(new CrawlerStream());
+		PrintStream ps = new PrintStream(new CrawlerLogStream());
 		System.setOut(ps);
 		System.setErr(ps);
 		new TwitterCrawler();
@@ -44,7 +44,7 @@ public class TwitterCrawler implements Runnable {
 	public TwitterCrawler() {
 		meta = loadMetaData();
 		if (meta == null)
-			meta = new CrawlerData();
+			meta = new CrawlerMetaData();
 		saveMetaData();
 		thread = new Thread(this);
 		thread.start();
@@ -103,19 +103,19 @@ public class TwitterCrawler implements Runnable {
 		}
 	}
 
-	public CrawlerData loadMetaData() {
+	public CrawlerMetaData loadMetaData() {
 		System.out.println("Loading metadata");
 		if (METADATA_FILE.exists())
 			try {
 				ObjectInputStream ois = new ObjectInputStream(new FileInputStream(METADATA_FILE));
 				Object obj = ois.readObject();
 				ois.close();
-				if (!(obj instanceof CrawlerData))
+				if (!(obj instanceof CrawlerMetaData))
 					return null;
-				CrawlerData cd = (CrawlerData) obj;
+				CrawlerMetaData cmd = (CrawlerMetaData) obj;
 				System.out.println("Successfully loaded metadata:");
-				System.out.println(cd.toString());
-				return cd;
+				System.out.println(cmd.toString());
+				return cmd;
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			} catch (IOException e) {

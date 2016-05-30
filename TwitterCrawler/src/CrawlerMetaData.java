@@ -1,7 +1,7 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class CrawlerData implements Serializable {
+public class CrawlerMetaData implements Serializable {
 
 	private static final long serialVersionUID = 9150753403501790088L;
 
@@ -10,7 +10,7 @@ public class CrawlerData implements Serializable {
 	private long cursor;
 	private ArrayList<Long> accessTime;
 
-	public CrawlerData() {
+	public CrawlerMetaData() {
 		System.out.println("Registering a new crawler profile");
 		// Initializes the first subset of data
 		subset = 1;

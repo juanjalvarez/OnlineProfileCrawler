@@ -7,7 +7,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-class CrawlerStream extends OutputStream {
+class CrawlerLogStream extends OutputStream {
 
 	public static final String OUTPUT_DIRECTORY = "output/";
 	public static final File OUTPUT_FILE = new File(OUTPUT_DIRECTORY + "output_" + getDateAndTimePrefix() + ".txt");
@@ -22,7 +22,7 @@ class CrawlerStream extends OutputStream {
 	private FileOutputStream fos;
 	private boolean newline;
 
-	public CrawlerStream() {
+	public CrawlerLogStream() {
 		stdout = System.out;
 		try {
 			fos = new FileOutputStream(OUTPUT_FILE);
