@@ -1,7 +1,7 @@
 twitter4j.properties
-data_repo
-output.data
 .metadata/
 metadata
 .settings
 bin/
+*.txt
+*.data

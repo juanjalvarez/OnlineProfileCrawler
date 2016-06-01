@@ -34,7 +34,8 @@ public class TwitterCrawler implements Runnable {
 	private CrawlerMetaData meta;
 	private Thread thread;
 
-	public static void main(String[] args) throws Exception {
+	public static void crawl() throws Exception {
+		System.out.println("\n====================\nCRAWLER\n====================\n");
 		PrintStream ps = new PrintStream(new CrawlerLogStream());
 		System.setOut(ps);
 		System.setErr(ps);
