@@ -143,7 +143,7 @@ public class Main {
 		if (u == null)
 			return "NULL USER";
 		StringBuilder sb = new StringBuilder();
-		String[] arr = { "ID: " + u.getId(), "\tUsername: " + u.getName(), "\tScreen name: " + u.getScreenName(),
+		String[] arr = { "ID: " + u.getId(), "\tName: " + u.getName(), "\tUsername: " + u.getScreenName(),
 				"\tDescription: " + u.getDescription(), "\tFavourites: " + u.getFavouritesCount(),
 				"\tFollowers: " + u.getFollowersCount(), "\tFriends: " + u.getFriendsCount(),
 				"\tLanguage: " + u.getLang(), "\tLocation: " + u.getLocation(), "\tStatuses: " + u.getStatusesCount(),

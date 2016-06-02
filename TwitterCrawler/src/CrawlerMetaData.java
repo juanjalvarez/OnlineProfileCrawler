@@ -6,7 +6,7 @@ public class CrawlerMetaData implements Serializable {
 	private static final long serialVersionUID = 9150753403501790088L;
 
 	private int subset;
-	private long target;
+	private String target;
 	private long cursor;
 	private ArrayList<Long> accessTime;
 
@@ -16,15 +16,12 @@ public class CrawlerMetaData implements Serializable {
 		subset = 1;
 
 		// Reads the target id
-		target = -1;
-		do {
-			try {
-				System.out.println("What is the ID of the user you wish to target?");
-				target = Long.parseLong(TwitterCrawler.br.readLine());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} while (target == -1);
+		System.out.println("What is the name of the user you wish to target?");
+		try {
+			target = TwitterCrawler.KEYBOARD.readLine();
+		} catch (Exception e) {
+			target = "Twitter";
+		}
 
 		// Sets the initial cursor to -1, the default cursor
 		cursor = -1;
@@ -41,7 +38,11 @@ public class CrawlerMetaData implements Serializable {
 		subset++;
 	}
 
-	public long getTarget() {
+	public void decreaseSubset() {
+		subset--;
+	}
+
+	public String getTarget() {
 		return target;
 	}
 
@@ -74,12 +75,12 @@ public class CrawlerMetaData implements Serializable {
 		for (long l : accessTime)
 			if (l >= baseTime)
 				count++;
-		System.out
-				.printf("Identified %d API calls in the past 15 minutes, the system is %s to make more calls\n", count,
-						count >= 15
-								? String.format("unable (%s)",
-										secondsToString((int) ((canMakeCallOn() - System.currentTimeMillis()) / 1000)))
-								: "able");
+		System.out.printf("Identified %d API calls in the past 15 minutes, the system is %s to make more calls\n",
+				count,
+				count >= 15
+						? String.format("unable (%s)",
+								secondsToString((int) ((canMakeCallOn() - System.currentTimeMillis()) / 1000)))
+						: "able");
 		return count < 15;
 	}
 
@@ -91,7 +92,7 @@ public class CrawlerMetaData implements Serializable {
 
 	@Override
 	public String toString() {
-		return String.format("Subsets: %d\nTarget ID: %d\nCursor: %d\nAccess times: %d", subset, target, cursor,
+		return String.format("Subsets: %d\nTarget ID: %s\nCursor: %d\nAccess times: %d", subset, target, cursor,
 				accessTime.size());
 	}
 }

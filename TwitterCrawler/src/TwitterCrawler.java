@@ -20,10 +20,8 @@ public class TwitterCrawler implements Runnable {
 
 	public static final Twitter TWITTER = TwitterFactory.getSingleton();
 	public static final File METADATA_FILE = new File("metadata");
-	public static final File DATA_FILE = new File("unified.data");
 	public static final String DATA_DIRECTORY_STRING = "data_repo/";
-
-	public static final BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	public static final BufferedReader KEYBOARD = new BufferedReader(new InputStreamReader(System.in));
 
 	static {
 		File dataDir = new File(DATA_DIRECTORY_STRING);
@@ -53,6 +51,7 @@ public class TwitterCrawler implements Runnable {
 
 	@Override
 	public void run() {
+		System.out.println("Starting the crawler");
 		while (true) {
 			if (!meta.canMakeCall())
 				try {
@@ -62,10 +61,9 @@ public class TwitterCrawler implements Runnable {
 				}
 			else
 				try {
-					meta.registerCall();
-					System.out.println("Attempting to acquire a subset of users");
 					PagableResponseList<User> data = TWITTER.getFollowersList(meta.getTarget(), meta.getCursor(), 200,
 							false, true);
+					meta.registerCall();
 					System.out.printf("Managed to acquire %d user profiles\n", data.size());
 					meta.setCursor(data.getNextCursor());
 					System.out.println("Saving the current subset of users");
@@ -82,7 +80,17 @@ public class TwitterCrawler implements Runnable {
 					meta.updateSubset();
 					saveMetaData();
 				} catch (TwitterException e) {
-					e.printStackTrace();
+					if (e.getErrorCode() == 88) {
+						System.out.println(
+								"Twitter is refusing to provide data, possibly due to untraced calls, the software will idle for 5 minutes before trying again.");
+						System.out.printf("Error message returned from the Twitter API: '%s'\n", e.getErrorMessage());
+						try {
+							Thread.sleep(300000);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						}
+					} else
+						e.printStackTrace();
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 				} catch (IOException e) {
