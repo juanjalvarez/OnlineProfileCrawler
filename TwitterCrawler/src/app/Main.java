@@ -1,3 +1,5 @@
+package app;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -27,9 +29,12 @@ public class Main {
 		if (arguments.length == 1 && arguments[0].equals("crawl"))
 			TwitterCrawler.crawl();
 		else {
+			System.out.println("\n====================\nUTILITIES\n====================\n");
+			long start = System.currentTimeMillis();
 			load();
+			System.out.printf("It took %d seconds to load all data\n", (System.currentTimeMillis() - start) / 1000);
 			for (String s : arguments) {
-				long start = System.currentTimeMillis();
+				start = System.currentTimeMillis();
 				if (s.equals("repetitions"))
 					repetitions();
 				else if (s.equals("report"))
@@ -57,7 +62,7 @@ public class Main {
 			return;
 		}
 		ObjectInputStream ois;
-		ArrayList<User> global = new ArrayList<User>(), tmp;
+		ArrayList<User> newList = new ArrayList<User>(), tmp;
 		if (OUTPUT_FILE.exists()) {
 			System.out.println("Loading past data");
 			ois = new ObjectInputStream(new FileInputStream(OUTPUT_FILE));
@@ -66,8 +71,8 @@ public class Main {
 			System.out
 					.println("Done reading data, it took " + (System.currentTimeMillis() - start) / 1000 + " seconds");
 			tmp = (ArrayList<User>) obj;
-			global = tmp;
-			System.out.println(String.format("Loaded %d users", global.size()));
+			newList = tmp;
+			System.out.println(String.format("Loaded %d users", newList.size()));
 			ois.close();
 		}
 		System.out.println("Loading new data");
@@ -78,11 +83,11 @@ public class Main {
 			ois = new ObjectInputStream(new FileInputStream(f));
 			Object obj = ois.readObject();
 			tmp = (ArrayList<User>) obj;
-			System.out.println(String.format("%d records transferred", tmp.size()));
 			for (User u : tmp)
-				global.add(u);
+				newList.add(u);
+			ois.close();
 		}
-		userList = global;
+		userList = newList;
 	}
 
 	public static void compile() throws Exception {
@@ -134,7 +139,6 @@ public class Main {
 			pastPercent = (int) percentage;
 			tmp = userToString(u);
 			pw.println(tmp);
-			pw.println();
 		}
 		System.out.println();
 	}

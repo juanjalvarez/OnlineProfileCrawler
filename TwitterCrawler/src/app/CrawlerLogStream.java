@@ -1,3 +1,4 @@
+package app;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -7,7 +8,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-class CrawlerLogStream extends OutputStream {
+public class CrawlerLogStream extends OutputStream {
 
 	public static final String OUTPUT_DIRECTORY = "output/";
 	public static final File OUTPUT_FILE = new File(OUTPUT_DIRECTORY + "output_" + getDateAndTimePrefix() + ".txt");
