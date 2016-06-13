@@ -8,7 +8,6 @@ import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import twitter4j.User;
 
@@ -19,9 +18,10 @@ import twitter4j.User;
  * @author Juan J. Alvarez <juanalvarez2@mail.usf.edu>
  *
  */
-public abstract class ComparingAlgorithm {
+public abstract class ComparingAlgorithm implements Runnable {
 
 	private String name;
+	private Thread thread;
 
 	/**
 	 * Initializes the user comparison algorithm with it's name.
@@ -33,6 +33,17 @@ public abstract class ComparingAlgorithm {
 		this.name = name;
 	}
 
+	/**
+	 * Compares the two given users and yields a weight value that represents
+	 * the probability of the two users being the same.
+	 * 
+	 * @param a
+	 *            First user.
+	 * @param b
+	 *            Second user.
+	 * @return Weight value representing the probability of both users being the
+	 *         same entity.
+	 */
 	public abstract double compare(User a, User b);
 
 	/**
@@ -44,21 +55,32 @@ public abstract class ComparingAlgorithm {
 	 * @param list
 	 *            List of users to cross reference.
 	 */
-	public void match(User[] list) {
+	public void match() {
+		thread = new Thread(this);
+		thread.start();
+	}
+
+	/**
+	 * Proves all possible relations within the current set of users using the
+	 * current algorithm in a separate thread.
+	 */
+	@Override
+	public void run() {
 		int x, y;
 		long start = System.currentTimeMillis();
 		double hit = 0.0;
 		User a, b;
-		for (x = 0; x < list.length; x++)
-			for (y = x; y < list.length; y++)
-				if (list[x].getId() != list[y].getId()) {
-					a = list[x];
-					b = list[y];
-					hit = compare(list[x], list[y]);
+		for (x = 0; x < userArr.length; x++)
+			for (y = x; y < userArr.length; y++)
+				if (userArr[x].getId() != userArr[y].getId()) {
+					a = userArr[x];
+					b = userArr[y];
+					hit = compare(userArr[x], userArr[y]);
 					proveRelation(a, b, hit);
 				}
 		System.out.println(String.format("Comparison took %d seconds with the '%s' algorithm",
 				(System.currentTimeMillis() - start) / 1000, name));
+		finishAlgorithm();
 	}
 
 	/**
@@ -66,20 +88,47 @@ public abstract class ComparingAlgorithm {
 	 */
 	public static ComparingAlgorithm[] algorithmList = {
 
-			new ComparingAlgorithm("Soundex test") {
+			new ComparingAlgorithm("Soundex similarity test") {
 				/**
-				 * Converts the lowercase version of both user's first name into
-				 * a soundex code, returns 1.0 if they are equal, 0.0 otherwise.
+				 * Converts the uppercase version of both users' names into
+				 * soundex codes, returns the equality ratio of the names.
 				 */
 				@Override
 				public double compare(User a, User b) {
-					String aName = a.getName().split(" ")[0].toLowerCase();
-					String bName = b.getName().split(" ")[0].toLowerCase();
-					String aSoundex = Utils.soundex(aName);
-					String bSoundex = Utils.soundex(bName);
-					if (aSoundex.equals(bSoundex))
-						return 1.0;
-					return 0.0;
+					String[] aName = a.getName().split(" ");
+					String[] bName = a.getName().split(" ");
+					int x;
+					for (x = 0; x < aName.length; x++)
+						aName[x] = Utils.soundex(aName[x].toUpperCase());
+					for (x = 0; x < bName.length; x++)
+						bName[x] = Utils.soundex(bName[x].toUpperCase());
+					int min = Math.min(aName.length, bName.length), score = 0;
+					for (x = 0; x < min; x++)
+						if (aName[x].equals(bName[x]))
+							score++;
+					return (double) score / (double) min;
+				}
+			}, new ComparingAlgorithm("Soundex difference test") {
+				/**
+				 * Converts the uppercase version of both users' full names into
+				 * soundex codes, then it will return the equality ratio of the
+				 * soundex codes, 0.0 if they are completely unequal.
+				 */
+				@Override
+				public double compare(User a, User b) {
+					String[] aName = a.getName().split(" ");
+					String[] bName = a.getName().split(" ");
+					int x, y;
+					for (x = 0; x < aName.length; x++)
+						aName[x] = Utils.soundex(aName[x].toUpperCase());
+					for (x = 0; x < bName.length; x++)
+						bName[x] = Utils.soundex(bName[x].toUpperCase());
+					int min = Math.min(aName.length, bName.length), score = 0;
+					for (x = 0; x < min; x++)
+						for (y = 0; y < 4; y++)
+							if (aName[x].charAt(y) == bName[x].charAt(y))
+								score++;
+					return (double) score / ((double) min * 4);
 				}
 			}, new ComparingAlgorithm("Equality test") {
 				/**
@@ -98,23 +147,71 @@ public abstract class ComparingAlgorithm {
 			}, new ComparingAlgorithm("Character set counter") {
 				/**
 				 * Compares the amount of similar characters between both users'
-				 * real names, returns the amount of matching characters divided
-				 * by the total amount of different characters in both names.
+				 * real names and usernames, returns the amount of matching
+				 * characters divided by the total amount of different
+				 * characters in both names.
 				 */
 				@Override
 				public double compare(User a, User b) {
-					HashSet<Character> set = new HashSet<Character>();
-					for (Character c : Utils.eliminateRepeatedCharacters(a.getName().toLowerCase()).toCharArray())
-						set.add(c);
-					double hits = 0.0;
-					for (Character c : Utils.eliminateRepeatedCharacters(b.getName().toLowerCase()).toCharArray()) {
-						if (set.contains(c)) {
-							hits += 1.0;
-						}
-						set.add(c);
-					}
-					double score = hits / (double) set.size();
-					return score;
+					double weight = 0.0;
+					weight += Utils.<Character> listSimilarityTest(
+							Utils.primitiveArrayToWrapperArray(a.getName().toCharArray()),
+							Utils.primitiveArrayToWrapperArray(b.getName().toCharArray()));
+					weight += Utils.<Character> listSimilarityTest(
+							Utils.primitiveArrayToWrapperArray(a.getScreenName().toCharArray()),
+							Utils.primitiveArrayToWrapperArray(b.getScreenName().toCharArray()));
+					return weight;
+				}
+			}, new ComparingAlgorithm("LCS Name Similarity") {
+				/**
+				 * Continuously removes the longest common substring between the
+				 * two users' real names and user-names until there are no
+				 * common substrings left, and then it yields a value equal to
+				 * one minus the division of the sum of the lengths of both
+				 * resulting strings and the average of the two original
+				 * strings.
+				 */
+				@Override
+				public double compare(User a, User b) {
+					double weight = 0.0;
+					weight += Utils.LCSStringSimilarity(a.getName(), b.getName());
+					weight += Utils.LCSStringSimilarity(a.getScreenName(), b.getScreenName());
+					return weight;
+				}
+			}, new ComparingAlgorithm("Language comparison") {
+				/**
+				 * Compares the languages of the two users and yields a weight
+				 * value of 1.0 if they are equal, 0.0 otherwise.
+				 */
+				@Override
+				public double compare(User a, User b) {
+					if (a.getLang().equals(b.getLang()))
+						return 1.0;
+					return 0.0;
+				}
+			}, new ComparingAlgorithm("Timezone comparison") {
+				/**
+				 * Compares the timezones of both users, yields a weight value
+				 * of 1.0 if their timezones match, 0.0 otherwise.
+				 */
+				@Override
+				public double compare(User a, User b) {
+					String za = a.getTimeZone();
+					String zb = b.getTimeZone();
+					if (za == null || zb == null)
+						return 0.0;
+					if (a.getTimeZone().equals(b.getTimeZone()))
+						return 1.0;
+					return 0.0;
+				}
+			}, new ComparingAlgorithm("Country presence") {
+				/**
+				 * Compares the list of countries that both users have been to
+				 * and yields the match ratio.
+				 */
+				@Override
+				public double compare(User a, User b) {
+					return Utils.<String> listSimilarityTest(a.getWithheldInCountries(), b.getWithheldInCountries());
 				}
 			}
 
@@ -132,6 +229,18 @@ public abstract class ComparingAlgorithm {
 	public static HashMap<String, Double> relationMap = new HashMap<String, Double>();
 
 	/**
+	 * Represents the amount of algorithms that have finished computing.
+	 */
+	public static int finishedAlgorithms = 0;
+
+	/**
+	 * Increments the amount of algorithms that have finished computing.
+	 */
+	public static synchronized void finishAlgorithm() {
+		finishedAlgorithms++;
+	}
+
+	/**
 	 * Yields the relation score between any two users.
 	 * 
 	 * @param a
@@ -141,7 +250,7 @@ public abstract class ComparingAlgorithm {
 	 * @return A double representing the relation score between the two given
 	 *         users.
 	 */
-	public static double getRelation(User a, User b) {
+	public static synchronized double getRelation(User a, User b) {
 		String key = Utils.generateKey(a, b);
 		Double d = relationMap.get(key);
 		if (d == null) {
@@ -163,7 +272,7 @@ public abstract class ComparingAlgorithm {
 	 *            Score to be added to the relation score between the two given
 	 *            users.
 	 */
-	public static void proveRelation(User a, User b, double percent) {
+	public static synchronized void proveRelation(User a, User b, double percent) {
 		String key = Utils.generateKey(a, b);
 		Double d = relationMap.get(key);
 		if (d == null)
@@ -203,8 +312,13 @@ public abstract class ComparingAlgorithm {
 			ois.close();
 		}
 		System.out.println(userArr.length + " users loaded");
+		long start = System.currentTimeMillis();
 		for (x = 0; x < algorithmList.length; x++)
-			algorithmList[x].match(userArr);
+			algorithmList[x].match();
+		while (finishedAlgorithms != algorithmList.length)
+			Thread.sleep(100);
+		System.out.println(
+				String.format("It took %d seconds to finish all tasks", (System.currentTimeMillis() - start) / 1000));
 		int[] maxIdx = new int[userArr.length];
 		double curRelation, maxRelation;
 		for (x = 0; x < userArr.length; x++) {
