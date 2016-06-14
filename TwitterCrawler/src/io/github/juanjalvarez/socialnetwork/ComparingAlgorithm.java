@@ -1,4 +1,4 @@
-package app;
+package io.github.juanjalvarez.socialnetwork;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -9,6 +9,8 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import io.github.juanjalvarez.socialnetwork.io.LoggingStream;
+import io.github.juanjalvarez.socialnetwork.toolbox.Algorithms;
 import twitter4j.User;
 
 /**
@@ -99,9 +101,9 @@ public abstract class ComparingAlgorithm implements Runnable {
 					String[] bName = a.getName().split(" ");
 					int x;
 					for (x = 0; x < aName.length; x++)
-						aName[x] = Utils.soundex(aName[x].toUpperCase());
+						aName[x] = Algorithms.soundex(aName[x].toUpperCase());
 					for (x = 0; x < bName.length; x++)
-						bName[x] = Utils.soundex(bName[x].toUpperCase());
+						bName[x] = Algorithms.soundex(bName[x].toUpperCase());
 					int min = Math.min(aName.length, bName.length), score = 0;
 					for (x = 0; x < min; x++)
 						if (aName[x].equals(bName[x]))
@@ -120,9 +122,9 @@ public abstract class ComparingAlgorithm implements Runnable {
 					String[] bName = a.getName().split(" ");
 					int x, y;
 					for (x = 0; x < aName.length; x++)
-						aName[x] = Utils.soundex(aName[x].toUpperCase());
+						aName[x] = Algorithms.soundex(aName[x].toUpperCase());
 					for (x = 0; x < bName.length; x++)
-						bName[x] = Utils.soundex(bName[x].toUpperCase());
+						bName[x] = Algorithms.soundex(bName[x].toUpperCase());
 					int min = Math.min(aName.length, bName.length), score = 0;
 					for (x = 0; x < min; x++)
 						for (y = 0; y < 4; y++)
@@ -154,12 +156,12 @@ public abstract class ComparingAlgorithm implements Runnable {
 				@Override
 				public double compare(User a, User b) {
 					double weight = 0.0;
-					weight += Utils.<Character> listSimilarityTest(
-							Utils.primitiveArrayToWrapperArray(a.getName().toCharArray()),
-							Utils.primitiveArrayToWrapperArray(b.getName().toCharArray()));
-					weight += Utils.<Character> listSimilarityTest(
-							Utils.primitiveArrayToWrapperArray(a.getScreenName().toCharArray()),
-							Utils.primitiveArrayToWrapperArray(b.getScreenName().toCharArray()));
+					weight += Algorithms.<Character> listSimilarityTest(
+							Algorithms.primitiveArrayToWrapperArray(a.getName().toCharArray()),
+							Algorithms.primitiveArrayToWrapperArray(b.getName().toCharArray()));
+					weight += Algorithms.<Character> listSimilarityTest(
+							Algorithms.primitiveArrayToWrapperArray(a.getScreenName().toCharArray()),
+							Algorithms.primitiveArrayToWrapperArray(b.getScreenName().toCharArray()));
 					return weight;
 				}
 			}, new ComparingAlgorithm("LCS Name Similarity") {
@@ -174,8 +176,8 @@ public abstract class ComparingAlgorithm implements Runnable {
 				@Override
 				public double compare(User a, User b) {
 					double weight = 0.0;
-					weight += Utils.LCSStringSimilarity(a.getName(), b.getName());
-					weight += Utils.LCSStringSimilarity(a.getScreenName(), b.getScreenName());
+					weight += Algorithms.LCSStringSimilarity(a.getName(), b.getName());
+					weight += Algorithms.LCSStringSimilarity(a.getScreenName(), b.getScreenName());
 					return weight;
 				}
 			}, new ComparingAlgorithm("Language comparison") {
@@ -211,7 +213,8 @@ public abstract class ComparingAlgorithm implements Runnable {
 				 */
 				@Override
 				public double compare(User a, User b) {
-					return Utils.<String> listSimilarityTest(a.getWithheldInCountries(), b.getWithheldInCountries());
+					return Algorithms.<String> listSimilarityTest(a.getWithheldInCountries(),
+							b.getWithheldInCountries());
 				}
 			}
 
@@ -251,7 +254,7 @@ public abstract class ComparingAlgorithm implements Runnable {
 	 *         users.
 	 */
 	public static synchronized double getRelation(User a, User b) {
-		String key = Utils.generateKey(a, b);
+		String key = Algorithms.generateKey(a, b);
 		Double d = relationMap.get(key);
 		if (d == null) {
 			d = 0.0;
@@ -273,7 +276,7 @@ public abstract class ComparingAlgorithm implements Runnable {
 	 *            users.
 	 */
 	public static synchronized void proveRelation(User a, User b, double percent) {
-		String key = Utils.generateKey(a, b);
+		String key = Algorithms.generateKey(a, b);
 		Double d = relationMap.get(key);
 		if (d == null)
 			d = percent;
@@ -292,11 +295,10 @@ public abstract class ComparingAlgorithm implements Runnable {
 	 */
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
-		PrintStream ps = new PrintStream(new CrawlerLogStream());
+		PrintStream ps = new PrintStream(new LoggingStream());
 		System.setOut(ps);
 		System.setErr(ps);
-		File data_dir = new File("data_repo");
-		File[] dataFile = data_dir.listFiles();
+		File[] dataFile = TwitterCrawler.DATA_DIRECTORY.listFiles();
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		System.out.printf("How many multiples of 200 users would you like to load? (%d sets are available)\n",
 				dataFile.length);

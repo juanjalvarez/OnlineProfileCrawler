@@ -1,4 +1,4 @@
-package app;
+package io.github.juanjalvarez.socialnetwork.io;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -8,7 +8,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class CrawlerLogStream extends OutputStream {
+public class LoggingStream extends OutputStream {
 
 	public static final String OUTPUT_DIRECTORY = "output/";
 	public static final File OUTPUT_FILE = new File(OUTPUT_DIRECTORY + "output_" + getDateAndTimePrefix() + ".txt");
@@ -23,7 +23,7 @@ public class CrawlerLogStream extends OutputStream {
 	private FileOutputStream fos;
 	private boolean newline;
 
-	public CrawlerLogStream() {
+	public LoggingStream() {
 		stdout = System.out;
 		try {
 			fos = new FileOutputStream(OUTPUT_FILE);

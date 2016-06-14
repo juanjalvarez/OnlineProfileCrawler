@@ -1,10 +1,10 @@
-package app;
+package io.github.juanjalvarez.socialnetwork.toolbox;
 
 import java.util.HashSet;
 
 import twitter4j.User;
 
-public class Utils {
+public class Algorithms {
 
 	/**
 	 * Yields a string representation of the phonetic code of the given string.

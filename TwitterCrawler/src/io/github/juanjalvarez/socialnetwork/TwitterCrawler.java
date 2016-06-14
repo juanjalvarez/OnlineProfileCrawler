@@ -1,4 +1,5 @@
-package app;
+package io.github.juanjalvarez.socialnetwork;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
+import io.github.juanjalvarez.socialnetwork.io.LoggingStream;
 import twitter4j.PagableResponseList;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
@@ -21,21 +23,20 @@ public class TwitterCrawler implements Runnable {
 
 	public static final Twitter TWITTER = TwitterFactory.getSingleton();
 	public static final File METADATA_FILE = new File("metadata");
-	public static final String DATA_DIRECTORY_STRING = "data_repo/";
+	public static final File DATA_DIRECTORY = new File("twitter_profiles/");
 	public static final BufferedReader KEYBOARD = new BufferedReader(new InputStreamReader(System.in));
 
 	static {
-		File dataDir = new File(DATA_DIRECTORY_STRING);
-		if (!dataDir.exists())
-			dataDir.mkdir();
+		if (!DATA_DIRECTORY.exists())
+			DATA_DIRECTORY.mkdir();
 	}
 
-	private CrawlerMetaData meta;
+	private TwitterCrawlerMetaData meta;
 	private Thread thread;
 
 	public static void crawl() throws Exception {
 		System.out.println("\n====================\nCRAWLER\n====================\n");
-		PrintStream ps = new PrintStream(new CrawlerLogStream());
+		PrintStream ps = new PrintStream(new LoggingStream());
 		System.setOut(ps);
 		System.setErr(ps);
 		new TwitterCrawler();
@@ -44,7 +45,7 @@ public class TwitterCrawler implements Runnable {
 	public TwitterCrawler() {
 		meta = loadMetaData();
 		if (meta == null)
-			meta = new CrawlerMetaData();
+			meta = new TwitterCrawlerMetaData();
 		saveMetaData();
 		thread = new Thread(this);
 		thread.start();
@@ -71,7 +72,7 @@ public class TwitterCrawler implements Runnable {
 					ArrayList<User> list = new ArrayList<User>();
 					for (User u : data)
 						list.add(u);
-					String fileName = DATA_DIRECTORY_STRING + meta.getSubset() + ".data";
+					String fileName = DATA_DIRECTORY.getName() + meta.getSubset() + ".data";
 					File newFile = new File(fileName);
 					newFile.createNewFile();
 					ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(newFile));
@@ -113,16 +114,16 @@ public class TwitterCrawler implements Runnable {
 		}
 	}
 
-	public CrawlerMetaData loadMetaData() {
+	public TwitterCrawlerMetaData loadMetaData() {
 		System.out.println("Loading metadata");
 		if (METADATA_FILE.exists())
 			try {
 				ObjectInputStream ois = new ObjectInputStream(new FileInputStream(METADATA_FILE));
 				Object obj = ois.readObject();
 				ois.close();
-				if (!(obj instanceof CrawlerMetaData))
+				if (!(obj instanceof TwitterCrawlerMetaData))
 					return null;
-				CrawlerMetaData cmd = (CrawlerMetaData) obj;
+				TwitterCrawlerMetaData cmd = (TwitterCrawlerMetaData) obj;
 				System.out.println("Successfully loaded metadata:");
 				System.out.println(cmd.toString());
 				return cmd;

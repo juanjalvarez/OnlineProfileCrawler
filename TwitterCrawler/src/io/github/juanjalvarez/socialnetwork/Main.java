@@ -1,4 +1,4 @@
-package app;
+package io.github.juanjalvarez.socialnetwork;
 
 import java.io.File;
 import java.io.FileInputStream;

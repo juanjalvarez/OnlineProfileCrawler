@@ -1,8 +1,8 @@
-package app;
+package io.github.juanjalvarez.socialnetwork;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-public class CrawlerMetaData implements Serializable {
+public class TwitterCrawlerMetaData implements Serializable {
 
 	private static final long serialVersionUID = 9150753403501790088L;
 
@@ -11,7 +11,7 @@ public class CrawlerMetaData implements Serializable {
 	private long cursor;
 	private ArrayList<Long> accessTime;
 
-	public CrawlerMetaData() {
+	public TwitterCrawlerMetaData() {
 		System.out.println("Registering a new crawler profile");
 		// Initializes the first subset of data
 		subset = 1;
