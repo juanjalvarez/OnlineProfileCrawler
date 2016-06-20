@@ -75,6 +75,15 @@ public class CommonProfile implements Serializable {
 	}
 
 	/**
+	 * Generates the list of field names that make up the profile.
+	 * 
+	 * @return List of field names that make up the profile.
+	 */
+	public String[] getFields() {
+		return data.keySet().toArray(new String[0]);
+	}
+
+	/**
 	 * Yields the list of data associated with the given key.
 	 * 
 	 * @param key
@@ -108,13 +117,10 @@ public class CommonProfile implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("TWITTER ID: ").append(Arrays.toString(getSet(TWITTER_ID))).append("\n");
-		sb.append("\tUSERNAME: ").append(Arrays.toString(getSet(USERNAME))).append("\n");
-		sb.append("\tREALNAME: ").append(Arrays.toString(getSet(REALNAME))).append("\n");
-		sb.append("\tLOCATION: ").append(Arrays.toString(getSet(LOCATION))).append("\n");
-		sb.append("\tTIMEZONE: ").append(Arrays.toString(getSet(TIMEZONE))).append("\n");
-		sb.append("\tLANGUAGE: ").append(Arrays.toString(getSet(LANGUAGE))).append("\n");
-		sb.append("\tCOUNTRIES: ").append(Arrays.toString(getSet(COUNTRIES_VISITED))).append("\n");
+		sb.append(TWITTER_ID + ": ").append(Arrays.toString(getList(TWITTER_ID))).append("\n");
+		for (String s : data.keySet())
+			if (!s.equals(TWITTER_ID))
+				sb.append("\t").append(s).append(": ").append(Arrays.toString(getList(s))).append("\n");
 		return sb.toString();
 	}
 
@@ -142,7 +148,8 @@ public class CommonProfile implements Serializable {
 	}
 
 	public static void main(String[] a) throws Exception {
-		ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File("data_repo/1.data")));
+		ObjectInputStream ois = new ObjectInputStream(
+				new FileInputStream(new File(TwitterCrawler.DATA_DIRECTORY + "/1.data")));
 		@SuppressWarnings("unchecked")
 		ArrayList<User> list = (ArrayList<User>) ois.readObject();
 		for (User u : list)

@@ -2,9 +2,7 @@ package io.github.juanjalvarez.socialnetwork;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,16 +66,25 @@ public abstract class ComparingAlgorithm implements Runnable {
 	 */
 	@Override
 	public void run() {
-		int x, y;
 		long start = System.currentTimeMillis();
+		int x, y;
 		double hit = 0.0;
 		User a, b;
 		for (x = 0; x < userArr.length; x++)
-			for (y = x; y < userArr.length; y++)
+			/**
+			 * Starts at x + 1 so that that comparisons do not ocurr twice.
+			 */
+			for (y = x + 1; y < userArr.length; y++)
 				if (userArr[x].getId() != userArr[y].getId()) {
 					a = userArr[x];
 					b = userArr[y];
 					hit = compare(userArr[x], userArr[y]);
+					/**
+					 * Half the score is removed so that if the total relation
+					 * index between any two users is negative it will be
+					 * ignored.
+					 */
+					hit -= .5;
 					proveRelation(a, b, hit);
 				}
 		System.out.println(String.format("Comparison took %d seconds with the '%s' algorithm",
@@ -146,39 +153,55 @@ public abstract class ComparingAlgorithm implements Runnable {
 						return 1.0;
 					return 0.0;
 				}
-			}, new ComparingAlgorithm("Character set counter") {
+			}, new ComparingAlgorithm("Character set counter - Real Name") {
 				/**
 				 * Compares the amount of similar characters between both users'
-				 * real names and usernames, returns the amount of matching
-				 * characters divided by the total amount of different
-				 * characters in both names.
-				 */
-				@Override
-				public double compare(User a, User b) {
-					double weight = 0.0;
-					weight += Algorithms.<Character> listSimilarityTest(
-							Algorithms.primitiveArrayToWrapperArray(a.getName().toCharArray()),
-							Algorithms.primitiveArrayToWrapperArray(b.getName().toCharArray()));
-					weight += Algorithms.<Character> listSimilarityTest(
-							Algorithms.primitiveArrayToWrapperArray(a.getScreenName().toCharArray()),
-							Algorithms.primitiveArrayToWrapperArray(b.getScreenName().toCharArray()));
-					return weight;
-				}
-			}, new ComparingAlgorithm("LCS Name Similarity") {
-				/**
-				 * Continuously removes the longest common substring between the
-				 * two users' real names and user-names until there are no
-				 * common substrings left, and then it yields a value equal to
-				 * one minus the division of the sum of the lengths of both
-				 * resulting strings and the average of the two original
+				 * real names and returns the amount of matching characters
+				 * divided by the total amount of different characters in both
 				 * strings.
 				 */
 				@Override
 				public double compare(User a, User b) {
-					double weight = 0.0;
-					weight += Algorithms.LCSStringSimilarity(a.getName(), b.getName());
-					weight += Algorithms.LCSStringSimilarity(a.getScreenName(), b.getScreenName());
-					return weight;
+					return Algorithms.<Character> listSimilarityTest(
+							Algorithms.primitiveArrayToWrapperArray(a.getName().toUpperCase().toCharArray()),
+							Algorithms.primitiveArrayToWrapperArray(b.getName().toUpperCase().toCharArray()));
+				}
+			}, new ComparingAlgorithm("Character set counter - Username") {
+				/**
+				 * Compares the amount of similar characters between both users'
+				 * usernames and returns the amount of matching characters
+				 * divided by the total amount of different characters in both
+				 * strings.
+				 */
+				@Override
+				public double compare(User a, User b) {
+					return Algorithms.<Character> listSimilarityTest(
+							Algorithms.primitiveArrayToWrapperArray(a.getScreenName().toCharArray()),
+							Algorithms.primitiveArrayToWrapperArray(b.getScreenName().toCharArray()));
+				}
+			}, new ComparingAlgorithm("LCS Name Similarity - Real Name") {
+				/**
+				 * Continuously removes the longest common substring between the
+				 * two users' real names until there are no common substrings
+				 * left, and then it yields a value equal to one minus the
+				 * division of the sum of the lengths of both resulting strings
+				 * and the average of the two original strings.
+				 */
+				@Override
+				public double compare(User a, User b) {
+					return Algorithms.LCSStringSimilarity(a.getName().toUpperCase(), b.getName().toUpperCase());
+				}
+			}, new ComparingAlgorithm("LCS Name Similarity - Username") {
+				/**
+				 * Continuously removes the longest common substring between the
+				 * two users' usernames until there are no common substrings
+				 * left, and then it yields a value equal to one minus the
+				 * division of the sum of the lengths of both resulting strings
+				 * and the average of the two original strings.
+				 */
+				@Override
+				public double compare(User a, User b) {
+					return Algorithms.LCSStringSimilarity(a.getScreenName(), b.getScreenName());
 				}
 			}, new ComparingAlgorithm("Language comparison") {
 				/**
@@ -215,6 +238,11 @@ public abstract class ComparingAlgorithm implements Runnable {
 				public double compare(User a, User b) {
 					return Algorithms.<String> listSimilarityTest(a.getWithheldInCountries(),
 							b.getWithheldInCountries());
+				}
+			}, new ComparingAlgorithm("Location comparer"){
+				@Override
+				public double compare(User a, User b) {
+					return 0;
 				}
 			}
 
@@ -279,9 +307,9 @@ public abstract class ComparingAlgorithm implements Runnable {
 		String key = Algorithms.generateKey(a, b);
 		Double d = relationMap.get(key);
 		if (d == null)
-			d = percent;
+			d = new Double(percent);
 		else
-			d = d.doubleValue() + percent;
+			d = new Double(d.doubleValue() + percent);
 		relationMap.put(key, d);
 	}
 
@@ -293,26 +321,18 @@ public abstract class ComparingAlgorithm implements Runnable {
 	 * @throws Exception
 	 *             When there is an issue reading from the data_repo directory.
 	 */
-	@SuppressWarnings("unchecked")
 	public static void main(String[] args) throws Exception {
 		PrintStream ps = new PrintStream(new LoggingStream());
 		System.setOut(ps);
 		System.setErr(ps);
 		File[] dataFile = TwitterCrawler.DATA_DIRECTORY.listFiles();
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		System.out.printf("How many multiples of 200 users would you like to load? (%d sets are available)\n",
-				dataFile.length);
+		System.out.printf("How many users would you like to load? (%d users are available)\n", dataFile.length * 200);
 		int amountOfDataToLoad = Integer.parseInt(br.readLine()), x, y;
-		userArr = new User[200 * amountOfDataToLoad];
-		ObjectInputStream ois;
-		ArrayList<User> tmpUserList;
-		for (x = 0; x < amountOfDataToLoad; x++) {
-			ois = new ObjectInputStream(new FileInputStream(dataFile[x]));
-			tmpUserList = (ArrayList<User>) ois.readObject();
-			for (y = 0; y < tmpUserList.size(); y++)
-				userArr[200 * x + y] = tmpUserList.get(y);
-			ois.close();
-		}
+		userArr = new User[amountOfDataToLoad];
+		ArrayList<User> list = ProfileLoader.<User> loadProfiles(User.class, amountOfDataToLoad);
+		for (x = 0; x < userArr.length; x++)
+			userArr[x] = list.get(x);
 		System.out.println(userArr.length + " users loaded");
 		long start = System.currentTimeMillis();
 		for (x = 0; x < algorithmList.length; x++)
@@ -346,7 +366,8 @@ public abstract class ComparingAlgorithm implements Runnable {
 						a = b;
 						b = tmp;
 					}
-					matchMap.put(a, b);
+					if (a.getId() != b.getId())
+						matchMap.put(a, b);
 				}
 			}
 		for (User u : matchMap.keySet()) {

@@ -1,6 +1,6 @@
 package io.github.juanjalvarez.socialnetwork.toolbox;
 
-class Pair<X> {
+public class Pair<X> {
 
 	private X a;
 	private X b;
@@ -22,7 +22,7 @@ class Pair<X> {
 	public boolean equals(Object obj) {
 		@SuppressWarnings("unchecked")
 		Pair<X> p = (Pair<X>) obj;
-		if (p.getA().equals(a) && p.getB().equals(b))
+		if ((p.getA().equals(a) && p.getB().equals(b)) || (p.getA().equals(b) && p.getB().equals(a)))
 			return true;
 		return false;
 	}

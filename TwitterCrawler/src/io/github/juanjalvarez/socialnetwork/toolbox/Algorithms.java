@@ -4,6 +4,12 @@ import java.util.HashSet;
 
 import twitter4j.User;
 
+/**
+ * Collection of algorithms used throughout the application.
+ * 
+ * @author Juan J. Alvarez <juanalvarez2@mail.usf.edu>
+ *
+ */
 public class Algorithms {
 
 	/**
@@ -72,24 +78,8 @@ public class Algorithms {
 			if (charArray[i] != charArray[i - 1] && charArray[i] != '0')
 				sb.append(charArray[i]);
 		String result = sb.toString();
-		return result.length() < 4 ? result + strRepeat("0", 4 - result.length())
+		return result.length() < 4 ? result + Utils.strRepeat("0", 4 - result.length())
 				: result.length() > 4 ? result.substring(0, 4) : result;
-	}
-
-	/**
-	 * Creates a string repeating the target string rep amount of times.
-	 * 
-	 * @param target
-	 *            String to be repeated.
-	 * @param rep
-	 *            Amount of times to repeat the string.
-	 * @return String with rep amount of repetitions of the target string.
-	 */
-	private static String strRepeat(String target, int rep) {
-		StringBuilder sb = new StringBuilder();
-		for (int x = 0; x < rep; x++)
-			sb.append(target);
-		return sb.toString();
 	}
 
 	/**
@@ -170,31 +160,33 @@ public class Algorithms {
 			name1 = name1.replace(lcs, "");
 			name2 = name2.replace(lcs, "");
 		}
-		return 1.0 - (double) (name1.length() + name2.length()) / ((double) (str1.length() + str2.length()) / 2.0);
+		return ((double) (name1.length() + name2.length()) / (double) (str1.length() + str2.length())) / 2.0;
 	}
 
 	/**
 	 * Compares both given arrays and yields a similarity ratio.
 	 * 
-	 * @param arr1
+	 * @param firstList
 	 *            First array.
-	 * @param arr2
+	 * @param secondList
 	 *            Second array.
 	 * @return Similarity ratio between both given arrays.
 	 */
-	public static <E> double listSimilarityTest(E[] arr1, E[] arr2) {
-		if (arr1 == null || arr2 == null)
-			return 0.0;
+	public static <E> double listSimilarityTest(E[] firstList, E[] secondList) {
+		double hits = 0.0;
+		if (firstList == null || secondList == null)
+			return hits;
+		E[] arr1 = Utils.getSet(firstList);
+		E[] arr2 = Utils.getSet(secondList);
 		HashSet<E> set = new HashSet<E>();
 		for (E e : arr1)
 			set.add(e);
-		int hits = 0;
 		for (E e : arr2)
 			if (set.contains(e))
-				hits++;
+				hits += 1.0;
 			else
 				set.add(e);
-		return (double) (hits) / (double) (set.size());
+		return (hits / (double) set.size());
 	}
 
 	/**
@@ -209,5 +201,19 @@ public class Algorithms {
 		for (int x = 0; x < arr.length; x++)
 			newArr[x] = new Character(arr[x]);
 		return newArr;
+	}
+
+	/**
+	 * Claculates the factorial of any positive number.
+	 * 
+	 * @param n
+	 *            The number which to calculate the factorial of.
+	 * @return Factorial of the given number b.
+	 */
+	public static synchronized long factorial(long n) {
+		long total = 0;
+		while (n > 0)
+			total += n--;
+		return total;
 	}
 }

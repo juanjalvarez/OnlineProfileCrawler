@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 import io.github.juanjalvarez.socialnetwork.io.DataConversionManager;
 import io.github.juanjalvarez.socialnetwork.io.DataConverter;
+import io.github.juanjalvarez.socialnetwork.toolbox.Utils;
 import twitter4j.User;
 
 public class ProfileFactory {
@@ -20,19 +21,20 @@ public class ProfileFactory {
 			CommonProfile.DATA_DIRECTORY.mkdir();
 		DataConverter<File, CommonProfile[]> dc = new DataConverter<File, CommonProfile[]>() {
 			@Override
-			public CommonProfile[] loadResource(File source) {
+			public CommonProfile[] convert(File source) {
 				ObjectInputStream ois;
 				try {
 					ois = new ObjectInputStream(new FileInputStream(source));
 					@SuppressWarnings("unchecked")
 					ArrayList<User> list = (ArrayList<User>) ois.readObject();
 					ois.close();
-					CommonProfile[] arr = new CommonProfile[list.size()];
-					for (int x = 0; x < arr.length; x++)
-						arr[x] = CommonProfile.createFromTwitter(list.get(x));
-					ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(
-							new File(CommonProfile.DATA_DIRECTORY.getName() + "/" + source.getName())));
-					oos.writeObject(arr);
+					ArrayList<CommonProfile> newList = new ArrayList<CommonProfile>();
+					for (int x = 0; x < list.size(); x++)
+						newList.add((CommonProfile.createFromTwitter(list.get(x))));
+					ObjectOutputStream oos = new ObjectOutputStream(
+							new FileOutputStream(new File(CommonProfile.DATA_DIRECTORY.getName() + "/twitter-"
+									+ Utils.getFileName(source) + ".pclu")));
+					oos.writeObject(newList);
 					oos.close();
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
@@ -46,7 +48,7 @@ public class ProfileFactory {
 		};
 		DataConversionManager<File, CommonProfile[]> dcm = new DataConversionManager<File, CommonProfile[]>(dc);
 		File[] sourceList = TwitterCrawler.DATA_DIRECTORY.listFiles();
-		dcm.convert(sourceList);
+		dcm.convert(sourceList, true, 0);
 	}
 
 	public static void main(String[] a) {

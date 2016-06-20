@@ -5,3 +5,4 @@ metadata
 bin/
 *.txt
 *.data
+*.pclu

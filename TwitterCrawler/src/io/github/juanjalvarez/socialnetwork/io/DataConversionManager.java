@@ -1,7 +1,8 @@
 package io.github.juanjalvarez.socialnetwork.io;
 
 import java.util.ArrayList;
-import java.util.Stack;
+
+import io.github.juanjalvarez.socialnetwork.toolbox.Listing;
 
 public final class DataConversionManager<X, Y> {
 
@@ -13,38 +14,48 @@ public final class DataConversionManager<X, Y> {
 		loader = l;
 	}
 
-	public Y[] convert(X[] data) {
+	public Y[] convert(X[] data, boolean progress, int waitTime) {
+		if (waitTime < 10)
+			waitTime = 10;
 		long start = System.currentTimeMillis();
-		int x, cpus = Runtime.getRuntime().availableProcessors();
-		Stack<X> dStack = new Stack<X>();
-		for (X tmp : data)
-			dStack.push(tmp);
-		Stack<Y> rStack = new Stack<Y>();
-		for (x = 0; x < cpus; x++)
-			thread.add(new DataConversionThread<X, Y>(loader, dStack, rStack));
+		int x, cpus = Runtime.getRuntime().availableProcessors(), div = data.length / cpus, rem = data.length % cpus,
+				amountOfData, pointer = 0, alive = 1;
+		double avgProgress;
+		Listing<X> source = new Listing<X>(data);
+		Listing<Y> target = new Listing<Y>(data.length);
+		for (x = 0; x < cpus; x++) {
+			amountOfData = div;
+			if (rem > 0) {
+				amountOfData++;
+				rem--;
+			}
+			thread.add(new DataConversionThread<X, Y>(loader, source, target, pointer, pointer + amountOfData));
+			pointer += amountOfData;
+		}
 		for (DataConversionThread<X, Y> l : thread)
 			l.start();
-		int alive = 1;
 		while (alive > 0) {
 			alive = thread.size();
 			for (x = 0; x < thread.size(); x++)
 				if (!thread.get(x).isAlive())
 					alive--;
-			System.out.print(String.format("\nData conversion: %.2f%% (%d/%d)",
-					100.0 * (double) rStack.size() / (double) data.length, rStack.size(), data.length));
+			avgProgress = 0.0;
+			for (DataConversionThread<X, Y> l : thread)
+				avgProgress += l.progress();
+			avgProgress /= (double) thread.size();
+			if (progress)
+				System.out.print(String.format("\rData conversion: %.2f%%", avgProgress * 100));
 			try {
-				Thread.sleep(500);
+				Thread.sleep(waitTime);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-		System.out.println(
-				String.format("Finished converting in %d seconds", (System.currentTimeMillis() - start) / 1000));
 		System.out.println();
-		@SuppressWarnings("unchecked")
-		Y[] arr = (Y[]) new Object[data.length];
-		for (x = 0; x < data.length; x++)
-			arr[x] = rStack.pop();
-		return arr;
+		if (progress) {
+			System.out.println(
+					String.format("Finished converting in %d seconds", (System.currentTimeMillis() - start) / 1000));
+		}
+		return target.getArray();
 	}
 }
