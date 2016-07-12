@@ -1,4 +1,5 @@
-package io.github.juanjalvarez.socialnetwork.io;
+package io.github.juanjalvarez.socialnetwork;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -30,7 +31,7 @@ public class LoggingStream extends OutputStream {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		newline = false;
+		newline = true;
 	}
 
 	@Override

@@ -1,4 +1,4 @@
-package io.github.juanjalvarez.socialnetwork;
+	package io.github.juanjalvarez.socialnetwork;
 import java.io.Serializable;
 import java.util.ArrayList;
 
@@ -10,8 +10,14 @@ public class TwitterCrawlerMetaData implements Serializable {
 	private String target;
 	private long cursor;
 	private ArrayList<Long> accessTime;
+	private int callsPer15Minutes;
+	
+	public TwitterCrawlerMetaData(){
+		this(15);
+	}
 
-	public TwitterCrawlerMetaData() {
+	public TwitterCrawlerMetaData(int callsPer15Minutes) {
+		this.callsPer15Minutes = callsPer15Minutes;
 		System.out.println("Registering a new crawler profile");
 		// Initializes the first subset of data
 		subset = 1;
@@ -60,7 +66,7 @@ public class TwitterCrawlerMetaData implements Serializable {
 	}
 
 	public long canMakeCallOn() {
-		long constTime = 1000 * 60 * 15;
+		long constTime = 1000 * 60 * callsPer15Minutes;
 		long currTime = System.currentTimeMillis();
 		long base = currTime - constTime;
 		long min = currTime;

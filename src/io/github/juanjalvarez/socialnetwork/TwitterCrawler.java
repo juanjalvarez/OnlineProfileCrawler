@@ -12,7 +12,6 @@ import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 
-import io.github.juanjalvarez.socialnetwork.io.LoggingStream;
 import twitter4j.PagableResponseList;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;

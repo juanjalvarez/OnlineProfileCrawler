@@ -1,4 +1,4 @@
-package io.github.juanjalvarez.socialnetwork.toolbox;
+package io.github.juanjalvarez.socialnetwork;
 
 public class Listing<E> {
 
