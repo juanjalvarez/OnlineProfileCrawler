@@ -53,7 +53,17 @@ public class FamousTwitterCrawler implements Runnable {
 				if (line.equals("end"))
 					break;
 				line = line.replaceAll(" ", "%20");
-				ResponseList<User> data = TWITTER.searchUsers(line, 0);
+				System.out.println(
+						"Please enter the number of users you would like to search for (whatever you enter multiplied by 20)");
+				int amount = Integer.parseInt(KEYBOARD.readLine()), x;
+				ResponseList<User> data = null, tmp;
+				for (x = 0; x < amount; x++) {
+					tmp = TWITTER.searchUsers(line, x);
+					if (data == null)
+						data = tmp;
+					else
+						data.addAll(tmp);
+				}
 				System.out.printf("Managed to acquire %d user profiles\n", data.size());
 				System.out.println("Saving the current subset of users");
 				ArrayList<User> list = new ArrayList<User>();
